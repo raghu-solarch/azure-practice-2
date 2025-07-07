@@ -29,7 +29,7 @@ resource "azurerm_linux_virtual_machine" "k8s-ubuntu-vm" {
   #   version   = "latest"
   # }
 
-  #custom_data = base64encode(file("${path.module}/init.sh"))
+  custom_data = base64encode(file("${path.module}/init.sh"))
 
 }
 
