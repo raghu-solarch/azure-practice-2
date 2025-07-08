@@ -1,4 +1,6 @@
-multi-env-vm-creation
+Spin Up, Tear Down, Repeat: Multi-Environment Azure Made Easy
+Multi-Environment Azure VM Creation Project
+
 
 Problem Statement:
 ==================
