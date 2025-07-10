@@ -1,7 +1,7 @@
 resource "azurerm_public_ip" "lb_public_ip" {
   name                = "myapppublicip"
-  location            = local.location
-  resource_group_name = local.resource_group_name
+  location            = azurerm_resource_group.RaghuSolArch.location
+  resource_group_name = azurerm_resource_group.RaghuSolArch.name
   allocation_method   = "Static"
   sku                 = "Standard"
   sku_tier            = "Regional"
@@ -9,8 +9,8 @@ resource "azurerm_public_ip" "lb_public_ip" {
 
 resource "azurerm_lb" "lb" {
   name                = "loadbalancer1"
-  location            = local.location
-  resource_group_name = local.resource_group_name
+  location            = azurerm_resource_group.RaghuSolArch.location
+  resource_group_name = azurerm_resource_group.RaghuSolArch.name
   sku                 = "Standard"
   sku_tier            = "Regional"
 

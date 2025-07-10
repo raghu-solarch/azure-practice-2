@@ -1,8 +1,8 @@
 resource "azurerm_network_interface" "nic" {
   for_each            = local.vm_data
   name                = "nic-${each.value.name}"
-  location            = local.location
-  resource_group_name = local.resource_group_name
+  location            = azurerm_resource_group.RaghuSolArch.location
+  resource_group_name = azurerm_resource_group.RaghuSolArch.name
 
   ip_configuration {
     name                          = "ipconfig-${each.value.name}"

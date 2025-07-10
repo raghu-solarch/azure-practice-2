@@ -21,7 +21,7 @@ resource "azurerm_subnet" "vnet1_subnet" {
 # Create a Network Security Group for Server1
 resource "azurerm_network_security_group" "nsg_server1" {
   name                = "nsg-server1"
-  location            = "France Central"
+  location            = var.vnet1_location
   resource_group_name = azurerm_resource_group.rg.name
 
   security_rule {

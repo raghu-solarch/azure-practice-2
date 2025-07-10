@@ -1,9 +1,13 @@
-# variables.tf
-
-variable "resource_group_name" {
-  description = "Name of the resource group"
+variable "resource_group_name_fr" {
+  description = "Name of the resource group for France Central"
   type        = string
-  default     = "learning"
+  default     = "learning-fr"
+}
+
+variable "resource_group_name_us" {
+  description = "Name of the resource group for East US"
+  type        = string
+  default     = "learning-us"
 }
 
 variable "location_fr" {
@@ -27,21 +31,10 @@ variable "admin_username" {
 variable "admin_password" {
   description = "Admin password for the virtual machines"
   type        = string
-  default     = "Redhat@12345"
+  default     = "Redhat@12345" # Use any strong password you like
   sensitive   = true
 }
 
-variable "domain_label_server1" {
-  description = "DNS label for server1 public IP"
-  type        = string
-  default     = "server1-france"
-}
-
-variable "domain_label_server2" {
-  description = "DNS label for server2 public IP"
-  type        = string
-  default     = "server2-eastus"
-}
 
 variable "traffic_manager_name" {
   description = "Name of the Traffic Manager profile"
@@ -54,3 +47,5 @@ variable "vm_size" {
   type        = string
   default     = "Standard_B1s"
 }
+
+

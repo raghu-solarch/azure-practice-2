@@ -89,8 +89,3 @@ variable "disk_size" {
   default     = 30
 }
 
-provider "azurerm" {
-  features {}
-  use_cli         = true
-  subscription_id = var.subscription_id
-}

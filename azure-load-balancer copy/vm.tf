@@ -1,7 +1,4 @@
 locals {
-  resource_group_name = "RaghuSolArch"
-  location            = "francecentral"
-
   vm_data = {
     server1 = {
       name = "vm1"
@@ -32,8 +29,8 @@ EOF
 resource "azurerm_linux_virtual_machine" "vm" {
   for_each                        = local.vm_data
   name                            = each.value.name
-  location                        = local.location
-  resource_group_name             = local.resource_group_name
+  location                        = azurerm_resource_group.RaghuSolArch.location
+  resource_group_name             = azurerm_resource_group.RaghuSolArch.name
   network_interface_ids           = [azurerm_network_interface.nic[each.key].id]
   size                            = "Standard_B1s"
   admin_username                  = "learning"

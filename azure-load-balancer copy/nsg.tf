@@ -1,7 +1,7 @@
 resource "azurerm_network_security_group" "nsg" {
   name                = "vm-nsg"
-  location            = local.location
-  resource_group_name = local.resource_group_name
+  location            = azurerm_resource_group.RaghuSolArch.location
+  resource_group_name = azurerm_resource_group.RaghuSolArch.name
 
   security_rule {
     name                       = "allow_lb_probe"

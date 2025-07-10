@@ -1,4 +1,4 @@
-# 5. Add peering on virtual network vnet1. peering link name = vnet1-to-vnet1-peering, virtual network = vnet2, enable allow vnet2 to access vnet1 and enable allow vnet2 to receive forwarded traffic from vnet1, under the local virtual network summary, add peering link name as vnet1-to-vnet2-peering and enable vnet1 to access vnet2 and enable allow vnet1 to receive forwarded traffic from vnet2,. ensure peering status is fully in sync and connected.
+#Add peering on virtual network vnet1. peering link name = vnet1-to-vnet1-peering, virtual network = vnet2, enable allow vnet2 to access vnet1 and enable allow vnet2 to receive forwarded traffic from vnet1, under the local virtual network summary, add peering link name as vnet1-to-vnet2-peering and enable vnet1 to access vnet2 and enable allow vnet1 to receive forwarded traffic from vnet2,. ensure peering status is fully in sync and connected.
 
 # Peering from vnet1 to vnet2
 resource "azurerm_virtual_network_peering" "vnet1_to_vnet2_peering" {
