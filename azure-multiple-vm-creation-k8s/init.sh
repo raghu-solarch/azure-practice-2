@@ -39,3 +39,5 @@ containerd config default | tee /etc/containerd/config.toml
 sed -e 's/SystemdCgroup = false/SystemdCgroup = true/g' -i /etc/containerd/config.toml
 systemctl restart containerd
 systemctl enable containerd
+echo "init.sh completed on $(hostname) at $(date)" | sudo tee /var/log/init-script-status.log
+echo "INIT SCRIPT FINISHED SUCCESSFULLY on $(hostname) at $(date)"

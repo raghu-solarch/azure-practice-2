@@ -1,0 +1,278 @@
+provider "azurerm" {
+  features {}
+  use_cli         = true
+  subscription_id = "3cb5b17b-f702-4534-bf9d-f5e83dd19e4c"
+}
+
+# Create a resource group
+resource "azurerm_resource_group" "rg" {
+  name     = "vnet-peering-rg"
+  location = "France Central"
+}
+
+# 1. Create a virtual network with name vnet1 at France central region with address space as 10.1.0.0/16.
+resource "azurerm_virtual_network" "vnet1" {
+  name                = "vnet1"
+  location            = "France Central"
+  resource_group_name = azurerm_resource_group.rg.name
+  address_space       = ["10.1.0.0/16"]
+
+  encryption {
+    enforcement = "AllowUnencrypted"
+  }
+}
+
+# Create a subnet for vnet1
+resource "azurerm_subnet" "vnet1_subnet" {
+  name                 = "default"
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet1.name
+  address_prefixes     = ["10.1.1.0/24"]
+}
+
+# Create a Network Security Group for Server1
+resource "azurerm_network_security_group" "nsg_server1" {
+  name                = "nsg-server1"
+  location            = "France Central"
+  resource_group_name = azurerm_resource_group.rg.name
+
+  security_rule {
+    name                       = "SSH"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "HTTP"
+    priority                   = 101
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "80"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "HTTPS"
+    priority                   = 102
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+}
+
+# Create a Public IP for Server1
+resource "azurerm_public_ip" "server1_public_ip" {
+  name                = "server1-public-ip"
+  location            = "France Central"
+  resource_group_name = azurerm_resource_group.rg.name
+  allocation_method   = "Static"
+  sku                 = "Standard" # Added SKU as Standard
+}
+
+# Create a Network Interface for Server1
+resource "azurerm_network_interface" "server1_nic" {
+  name                = "server1-nic"
+  location            = "France Central"
+  resource_group_name = azurerm_resource_group.rg.name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.vnet1_subnet.id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.server1_public_ip.id
+  }
+}
+
+# Associate NSG with Server1 NIC
+resource "azurerm_network_interface_security_group_association" "server1_nsg_association" {
+  network_interface_id      = azurerm_network_interface.server1_nic.id
+  network_security_group_id = azurerm_network_security_group.nsg_server1.id
+}
+
+
+
+# 3. Create a virtual network with name vnet2 at North Europe region with address space as 20.1.0.0/16.
+resource "azurerm_virtual_network" "vnet2" {
+  name                = "vnet2"
+  location            = "North Europe"
+  resource_group_name = azurerm_resource_group.rg.name
+  address_space       = ["20.1.0.0/16"]
+
+  encryption {
+    enforcement = "AllowUnencrypted"
+  }
+}
+
+# Create a subnet for vnet2
+resource "azurerm_subnet" "vnet2_subnet" {
+  name                 = "default"
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.vnet2.name
+  address_prefixes     = ["20.1.1.0/24"]
+}
+
+# Create a Network Security Group for Server2
+resource "azurerm_network_security_group" "nsg_server2" {
+  name                = "nsg-server2"
+  location            = "North Europe"
+  resource_group_name = azurerm_resource_group.rg.name
+
+  security_rule {
+    name                       = "SSH"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "HTTP"
+    priority                   = 101
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "80"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "HTTPS"
+    priority                   = 102
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+}
+
+# Create a Public IP for Server2
+resource "azurerm_public_ip" "server2_public_ip" {
+  name                = "server2-public-ip"
+  location            = "North Europe"
+  resource_group_name = azurerm_resource_group.rg.name
+  allocation_method   = "Static"
+  sku                 = "Standard" # Added SKU as Standard
+}
+
+# Create a Network Interface for Server2
+resource "azurerm_network_interface" "server2_nic" {
+  name                = "server2-nic"
+  location            = "North Europe"
+  resource_group_name = azurerm_resource_group.rg.name
+
+  ip_configuration {
+    name                          = "internal"
+    subnet_id                     = azurerm_subnet.vnet2_subnet.id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.server2_public_ip.id
+  }
+}
+
+# Associate NSG with Server2 NIC
+resource "azurerm_network_interface_security_group_association" "server2_nsg_association" {
+  network_interface_id      = azurerm_network_interface.server2_nic.id
+  network_security_group_id = azurerm_network_security_group.nsg_server2.id
+}
+
+
+# 2. Create a virtual machine which with name server1 and region = France central, no redundancy required, with image ubuntu server 24.04 lts x64 gen2, with standard_b1s size, authentication type as password, username = learning, password = Redhat@12345, enable all ports like ssh, http and https, select standard hdd as os disk type, select vnet1 virtual network.
+resource "azurerm_linux_virtual_machine" "server1" {
+  name                            = "server1"
+  location                        = "France Central"
+  resource_group_name             = azurerm_resource_group.rg.name
+  size                            = "Standard_B1s"
+  admin_username                  = "learning"
+  admin_password                  = "Redhat@12345"
+  disable_password_authentication = false
+  network_interface_ids           = [azurerm_network_interface.server1_nic.id]
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+    name                 = "server1-osdisk"
+    disk_size_gb         = 30
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts"
+    version   = "latest"
+  }
+}
+
+
+# 4. Create a virtual machine which with name server2 and region = France central, no redundancy required, with image ubuntu server 24.04 lts x64 gen2, with standard_b1s size, authentication type as password, username = learning, password = Redhat@12345, enable all ports like ssh, http and https, select standard hdd as os disk type, select vnet2 virtual network.
+resource "azurerm_linux_virtual_machine" "server2" {
+  name                            = "server2"
+  location                        = "North Europe" # Note: Your request stated France Central, but for VNet peering across regions, the VM needs to be in the same region as its VNet. I've corrected this to North Europe.
+  resource_group_name             = azurerm_resource_group.rg.name
+  size                            = "Standard_B1s"
+  admin_username                  = "learning"
+  admin_password                  = "Redhat@12345"
+  disable_password_authentication = false
+  network_interface_ids           = [azurerm_network_interface.server2_nic.id]
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+    name                 = "server2-osdisk"
+    disk_size_gb         = 30
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts"
+    version   = "latest"
+  }
+}
+
+
+#Add peering on virtual network vnet1. peering link name = vnet1-to-vnet1-peering, virtual network = vnet2, enable allow vnet2 to access vnet1 and enable allow vnet2 to receive forwarded traffic from vnet1, under the local virtual network summary, add peering link name as vnet1-to-vnet2-peering and enable vnet1 to access vnet2 and enable allow vnet1 to receive forwarded traffic from vnet2,. ensure peering status is fully in sync and connected.
+
+# Peering from vnet1 to vnet2
+resource "azurerm_virtual_network_peering" "vnet1_to_vnet2_peering" {
+  name                         = "vnet1-to-vnet2-peering"
+  resource_group_name          = azurerm_resource_group.rg.name
+  virtual_network_name         = azurerm_virtual_network.vnet1.name
+  remote_virtual_network_id    = azurerm_virtual_network.vnet2.id
+  allow_virtual_network_access = true
+  allow_forwarded_traffic      = true
+  allow_gateway_transit        = false # Set to true if you have a VPN Gateway in vnet2 and want vnet1 to use it
+  use_remote_gateways          = false # Set to true if you want vnet1 to use a VPN Gateway in vnet2
+}
+
+# Peering from vnet2 to vnet1 (the reciprocal peering)
+resource "azurerm_virtual_network_peering" "vnet2_to_vnet1_peering" {
+  name                         = "vnet2-to-vnet1-peering"
+  resource_group_name          = azurerm_resource_group.rg.name
+  virtual_network_name         = azurerm_virtual_network.vnet2.name
+  remote_virtual_network_id    = azurerm_virtual_network.vnet1.id
+  allow_virtual_network_access = true
+  allow_forwarded_traffic      = true
+  allow_gateway_transit        = false
+  use_remote_gateways          = false
+}

@@ -24,7 +24,7 @@ resource "azurerm_traffic_manager_external_endpoint" "endpoint1" {
   profile_id        = azurerm_traffic_manager_profile.tm_profile.id
   target            = azurerm_public_ip.server1_ip.fqdn
   endpoint_location = var.location_fr
-  priority          = 1
+  priority          = 5
 }
 
 resource "azurerm_traffic_manager_external_endpoint" "endpoint2" {

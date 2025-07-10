@@ -1,10 +1,22 @@
-resource "azurerm_network_security_group" "docker-ntw-security-group" {
-  name                = "docker-ntw-security-group"
-  location            = azurerm_resource_group.docker-rg.location
-  resource_group_name = azurerm_resource_group.docker-rg.name
+resource "azurerm_network_security_group" "nsg" {
+  name                = "vm-nsg"
+  location            = azurerm_resource_group.RaghuSolArch.location
+  resource_group_name = azurerm_resource_group.RaghuSolArch.name
 
   security_rule {
-    name                       = "SSH"
+    name                       = "allow_lb_probe"
+    priority                   = 1000
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "AzureLoadBalancer"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "allow_ssh"
     priority                   = 1001
     direction                  = "Inbound"
     access                     = "Allow"
@@ -14,9 +26,8 @@ resource "azurerm_network_security_group" "docker-ntw-security-group" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
-
   security_rule {
-    name                       = "HTTP"
+    name                       = "allow_http"
     priority                   = 1002
     direction                  = "Inbound"
     access                     = "Allow"
@@ -26,7 +37,6 @@ resource "azurerm_network_security_group" "docker-ntw-security-group" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
-
   security_rule {
     name                       = "HTTPS"
     priority                   = 1003
@@ -38,4 +48,5 @@ resource "azurerm_network_security_group" "docker-ntw-security-group" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
+
 }

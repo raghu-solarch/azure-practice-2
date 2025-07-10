@@ -1,10 +1,51 @@
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = ">3.0.0"
-    }
-  }
+variable "resource_group_name_fr" {
+  description = "Name of the resource group for France Central"
+  type        = string
+  default     = "learning-fr"
+}
+
+variable "resource_group_name_us" {
+  description = "Name of the resource group for East US"
+  type        = string
+  default     = "learning-us"
+}
+
+variable "location_fr" {
+  description = "Location for France Central resources"
+  type        = string
+  default     = "France Central"
+}
+
+variable "location_us" {
+  description = "Location for East US resources"
+  type        = string
+  default     = "East US"
+}
+
+variable "admin_username" {
+  description = "Admin username for the virtual machines"
+  type        = string
+  default     = "learning"
+}
+
+variable "admin_password" {
+  description = "Admin password for the virtual machines"
+  type        = string
+  default     = "Redhat@12345" # Use any strong password you like
+  sensitive   = true
+}
+
+
+variable "traffic_manager_name" {
+  description = "Name of the Traffic Manager profile"
+  type        = string
+  default     = "geographictrafficmanager123"
+}
+
+variable "vm_size" {
+  description = "Size of the virtual machines"
+  type        = string
+  default     = "Standard_B1s"
 }
 
 provider "azurerm" {
@@ -13,164 +54,170 @@ provider "azurerm" {
   subscription_id = "3cb5b17b-f702-4534-bf9d-f5e83dd19e4c"
 }
 
-# 1. Resource Group
-resource "azurerm_resource_group" "rg" {
-  name     = "learning"
-  location = "France Central"
+resource "azurerm_resource_group" "rg_fr" {
+  name     = var.resource_group_name_fr
+  location = var.location_fr
+
 }
 
-# 2. Virtual Networks
-resource "azurerm_virtual_network" "vnet1" {
-  name                = "vnet1"
+resource "azurerm_resource_group" "rg_us" {
+  name     = var.resource_group_name_us
+  location = var.location_us
+
+}
+
+resource "azurerm_virtual_network" "vnet_fr" {
+  name                = "vnet-fr"
   address_space       = ["10.0.0.0/16"]
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = var.location_fr
+  resource_group_name = azurerm_resource_group.rg_fr.name
+
 }
 
-resource "azurerm_virtual_network" "vnet2" {
-  name                = "vnet2"
+resource "azurerm_virtual_network" "vnet_us" {
+  name                = "vnet-us"
   address_space       = ["10.1.0.0/16"]
-  location            = "East US"
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = var.location_us
+  resource_group_name = azurerm_resource_group.rg_us.name
+
 }
 
-# 3. Subnets
-resource "azurerm_subnet" "subnet1" {
-  name                 = "subnet1"
-  resource_group_name  = azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet1.name
+resource "azurerm_subnet" "subnet_fr" {
+  name                 = "subnet-fr"
+  resource_group_name  = azurerm_resource_group.rg_fr.name
+  virtual_network_name = azurerm_virtual_network.vnet_fr.name
   address_prefixes     = ["10.0.1.0/24"]
 }
 
-resource "azurerm_subnet" "subnet2" {
-  name                 = "subnet2"
-  resource_group_name  = azurerm_resource_group.rg.name
-  virtual_network_name = azurerm_virtual_network.vnet2.name
+resource "azurerm_subnet" "subnet_us" {
+  name                 = "subnet-us"
+  resource_group_name  = azurerm_resource_group.rg_us.name
+  virtual_network_name = azurerm_virtual_network.vnet_us.name
   address_prefixes     = ["10.1.1.0/24"]
 }
 
-# 4. Network Security Group
 resource "azurerm_network_security_group" "nsg_fr" {
   name                = "nsg-fr"
-  location            = "France Central"
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = var.location_fr
+  resource_group_name = azurerm_resource_group.rg_fr.name
 
   security_rule {
-    name                       = "allow_all"
+    name                       = "allow_http"
     priority                   = 100
     direction                  = "Inbound"
     access                     = "Allow"
-    protocol                   = "*"
+    protocol                   = "Tcp"
     source_port_range          = "*"
-    destination_port_range     = "*"
+    destination_port_range     = "80"
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
+
 }
 
 resource "azurerm_network_security_group" "nsg_us" {
   name                = "nsg-us"
-  location            = "East US"
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = var.location_us
+  resource_group_name = azurerm_resource_group.rg_us.name
 
   security_rule {
-    name                       = "allow_all"
+    name                       = "allow_http"
     priority                   = 100
     direction                  = "Inbound"
     access                     = "Allow"
-    protocol                   = "*"
+    protocol                   = "Tcp"
     source_port_range          = "*"
-    destination_port_range     = "*"
+    destination_port_range     = "80"
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
+
 }
 
-# 5. Network Interfaces + Public IPs for server1 and server2
-resource "azurerm_public_ip" "server1_ip" {
-  name                = "server1-public-ip"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
-  allocation_method   = "Static"
-  domain_name_label   = "server1-france"
-}
-
-resource "azurerm_public_ip" "server2_ip" {
-  name                = "server2-public-ip"
-  location            = "East US"
-  resource_group_name = azurerm_resource_group.rg.name
-  allocation_method   = "Static"
-  domain_name_label   = "server2-eastus"
-}
-
-resource "azurerm_network_interface" "nic1" {
-  name                = "nic1"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+resource "azurerm_network_interface" "nic_fr" {
+  name                = "nic-fr"
+  location            = var.location_fr
+  resource_group_name = azurerm_resource_group.rg_fr.name
 
   ip_configuration {
-    name                          = "ipconfig1"
-    subnet_id                     = azurerm_subnet.subnet1.id
+    name                          = "ipconfig-fr"
+    subnet_id                     = azurerm_subnet.subnet_fr.id
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.server1_ip.id
   }
 
 }
 
-resource "azurerm_network_interface" "nic2" {
-  name                = "nic2"
-  location            = "East US"
-  resource_group_name = azurerm_resource_group.rg.name
+resource "azurerm_network_interface" "nic_us" {
+  name                = "nic-us"
+  location            = var.location_us
+  resource_group_name = azurerm_resource_group.rg_us.name
 
   ip_configuration {
-    name                          = "ipconfig2"
-    subnet_id                     = azurerm_subnet.subnet2.id
+    name                          = "ipconfig-us"
+    subnet_id                     = azurerm_subnet.subnet_us.id
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.server2_ip.id
   }
 
 }
 
-resource "azurerm_network_interface_security_group_association" "nic1_nsg" {
-  network_interface_id      = azurerm_network_interface.nic1.id
+resource "azurerm_network_interface_security_group_association" "nic_fr_nsg" {
+  network_interface_id      = azurerm_network_interface.nic_fr.id
   network_security_group_id = azurerm_network_security_group.nsg_fr.id
 }
 
-resource "azurerm_network_interface_security_group_association" "nic2_nsg" {
-  network_interface_id      = azurerm_network_interface.nic2.id
+resource "azurerm_network_interface_security_group_association" "nic_us_nsg" {
+  network_interface_id      = azurerm_network_interface.nic_us.id
   network_security_group_id = azurerm_network_security_group.nsg_us.id
 }
 
+resource "azurerm_public_ip" "server1_ip" {
+  name                = "server1-public-ip"
+  location            = var.location_fr
+  resource_group_name = azurerm_resource_group.rg_fr.name
+  allocation_method   = "Static"
+  domain_name_label   = "server1-fr-demo" # must be unique in Azure
 
-# 6. Custom Scripts
+}
+
+resource "azurerm_public_ip" "server2_ip" {
+  name                = "server2-public-ip"
+  location            = var.location_us
+  resource_group_name = azurerm_resource_group.rg_us.name
+  allocation_method   = "Static"
+  domain_name_label   = "server2-us-demo" # must be unique in Azure
+
+}
+
 locals {
-  script_server1 = <<-EOT
+  script_fr = <<-EOT
     #!/bin/bash
     apt update -y
     apt install apache2 -y
-    service apache2 restart
+    systemctl restart apache2
     echo "server1 france central" > /var/www/html/index.html
   EOT
 
-  script_server2 = <<-EOT
+  script_us = <<-EOT
     #!/bin/bash
     apt update -y
     apt install apache2 -y
-    service apache2 restart
+    systemctl restart apache2
     echo "server2 east us" > /var/www/html/index.html
   EOT
 }
 
-# 7. Virtual Machines
 resource "azurerm_linux_virtual_machine" "server1" {
-  name                            = "server1"
-  resource_group_name             = azurerm_resource_group.rg.name
-  location                        = azurerm_resource_group.rg.location
-  size                            = "Standard_B1s"
-  admin_username                  = "learning"
-  admin_password                  = "Redhat@12345"
+  name                            = "server1-fr"
+  resource_group_name             = azurerm_resource_group.rg_fr.name
+  location                        = var.location_fr
+  size                            = var.vm_size
+  admin_username                  = var.admin_username
+  admin_password                  = var.admin_password
   disable_password_authentication = false
-  network_interface_ids           = [azurerm_network_interface.nic1.id]
+  network_interface_ids           = [azurerm_network_interface.nic_fr.id]
+
   os_disk {
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
@@ -184,18 +231,19 @@ resource "azurerm_linux_virtual_machine" "server1" {
     version   = "latest"
   }
 
-  custom_data = base64encode(local.script_server1)
+  custom_data = base64encode(local.script_fr)
 }
 
 resource "azurerm_linux_virtual_machine" "server2" {
-  name                            = "server2"
-  resource_group_name             = azurerm_resource_group.rg.name
-  location                        = "East US"
-  size                            = "Standard_B1s"
-  admin_username                  = "learning"
-  admin_password                  = "Redhat@12345"
+  name                            = "server2-us"
+  resource_group_name             = azurerm_resource_group.rg_us.name
+  location                        = var.location_us
+  size                            = var.vm_size
+  admin_username                  = var.admin_username
+  admin_password                  = var.admin_password
   disable_password_authentication = false
-  network_interface_ids           = [azurerm_network_interface.nic2.id]
+  network_interface_ids           = [azurerm_network_interface.nic_us.id]
+
   os_disk {
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
@@ -209,17 +257,19 @@ resource "azurerm_linux_virtual_machine" "server2" {
     version   = "latest"
   }
 
-  custom_data = base64encode(local.script_server2)
+  custom_data = base64encode(local.script_us)
+
 }
 
-# 8. Traffic Manager Profile
+#traffic manager
+
 resource "azurerm_traffic_manager_profile" "tm_profile" {
-  name                   = "weightedtrafficmanager"
-  resource_group_name    = azurerm_resource_group.rg.name
-  traffic_routing_method = "Weighted"
+  name                   = var.traffic_manager_name
+  resource_group_name    = azurerm_resource_group.rg_fr.name # Any RG is fine; TM is global
+  traffic_routing_method = "Geographic"
 
   dns_config {
-    relative_name = "weightedtrafficmanager"
+    relative_name = var.traffic_manager_name
     ttl           = 30
   }
 
@@ -232,45 +282,35 @@ resource "azurerm_traffic_manager_profile" "tm_profile" {
     tolerated_number_of_failures = 3
   }
 
-  tags = {
-    environment = "lab"
-  }
+
 }
 
-
-# 9 & 10. Endpoints for Traffic Manager
-resource "azurerm_traffic_manager_external_endpoint" "endpoint1" {
-  name              = "server1-endpoint"
+resource "azurerm_traffic_manager_external_endpoint" "endpoint_fr" {
+  name              = "server1-fr-endpoint"
   profile_id        = azurerm_traffic_manager_profile.tm_profile.id
   target            = azurerm_public_ip.server1_ip.fqdn
-  endpoint_location = "France Central"
-  weight            = 100
-
+  endpoint_location = var.location_fr
+  geo_mappings      = ["WORLD"]
 }
 
-resource "azurerm_traffic_manager_external_endpoint" "endpoint2" {
-  name              = "server2-endpoint"
+resource "azurerm_traffic_manager_external_endpoint" "endpoint_us" {
+  name              = "server2-us-endpoint"
   profile_id        = azurerm_traffic_manager_profile.tm_profile.id
   target            = azurerm_public_ip.server2_ip.fqdn
-  endpoint_location = "East US"
-  weight            = 80
-
+  endpoint_location = var.location_us
+  geo_mappings      = ["GEO-AS"]
 }
 
-
-# Output: Public IP of server1
 output "server1_public_ip" {
   description = "Public IP address of server1"
   value       = azurerm_public_ip.server1_ip.ip_address
 }
 
-# Output: Public IP of server2
 output "server2_public_ip" {
   description = "Public IP address of server2"
   value       = azurerm_public_ip.server2_ip.ip_address
 }
 
-# Output: FQDN (DNS name) of Traffic Manager
 output "traffic_manager_fqdn" {
   description = "DNS name of the Traffic Manager profile"
   value       = azurerm_traffic_manager_profile.tm_profile.fqdn

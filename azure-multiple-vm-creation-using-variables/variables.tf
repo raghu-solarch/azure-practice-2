@@ -73,5 +73,5 @@ variable "os_disk_size" {
 variable "vm_names" {
   description = "List of VM names to create"
   type        = list(string)
-  default     = ["server1", "server2"]
+  default     = ["server1", "server2", "server3"]
 }
