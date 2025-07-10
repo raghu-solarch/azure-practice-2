@@ -49,6 +49,7 @@ sudo apt-get -y install docker-ce docker-ce-cli containerd.io
 sudo systemctl start docker
 sudo systemctl enable docker
 sudo gpasswd -a learning docker
+echo "DOCKER & TERRAFORM INSTALLATION COMPLETE" | tee /var/log/docker_install_status.log
 sudo reboot
 
 EOF
