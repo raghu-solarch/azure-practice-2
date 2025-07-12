@@ -18,10 +18,12 @@ jobs:
   steps:
   - checkout: self
 
-  - script: |
-      echo "Running automation.sh with action: ${{ parameters.action }}"
-
-      CMD="bash multi-env-vm-creation-updated/scripts/automation.sh dummy ${{ parameters.action }}"
-      echo "Executing: $CMD"
-      eval $CMD
+  - task: AzureCLI@2
     displayName: Run Backend Setup/Delete Script
+    inputs:
+      azureSubscription: 'my-terraform-pipeline-sp'   # Replace with your Azure service connection name
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        echo "Running automation.sh with action: ${{ parameters.action }}"
+        bash multi-env-vm-creation-updated/scripts/automation.sh dummy ${{ parameters.action }}
