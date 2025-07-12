@@ -1,67 +1,30 @@
-trigger:
-- main
-- master
-
-parameters:
-  - name: environment
-    type: string
-    default: dev
-    values:
-      - dev
-      - sit
-      - uat
-      - staging
-      - prod
-
-  - name: action
-    type: string
-    default: show-vms
-    values:
-      - add
-      - delete
-      - destroy-infra
-      - show-vms
-      - cost
-      - backend-setup
-      - backend-delete
-
-  - name: params
-    type: string
-    default: ''
+ 
+ trigger: none
 
 jobs:
-- job: RunAutomation
+- job: BackendSetupDelete
   pool:
-    vmImage: ubuntu-latest
+    vmImage: 'ubuntu-latest'
 
   steps:
   - checkout: self
 
-  # Copy backend env and config files from workspace (if your pipeline produces these artifacts)
-  - script: |
-      echo "Copying backend files to project root..."
-      cp $(Pipeline.Workspace)/backend-env/.backend-env multi-env-vm-creation-updated/.backend-env
-      cp $(Pipeline.Workspace)/backend-config/.backend-config multi-env-vm-creation-updated/.backend-config
-    displayName: Copy Backend Config Files
-
-  # Run the automation.sh script with parameters passed from pipeline variables
-  - script: |
-      echo "Running automation.sh with:"
-      echo "  Environment: $(environment)"
-      echo "  Action: $(action)"
-      echo "  Params: $(params)"
-
-      # Convert params string to array if not empty
-      PARAMS_ARRAY=()
-      if [ -n "$(params)" ]; then
-        read -r -a PARAMS_ARRAY <<< "$(params)"
-      fi
-
-      CMD="bash multi-env-vm-creation-updated/scripts/automation.sh $(environment) $(action) ${PARAMS_ARRAY[@]}"
-      echo "Executing: $CMD"
-      eval $CMD
-    displayName: Run Automation Script
+  - task: AzureCLI@2
+    displayName: 'Run Backend Setup/Delete Script'
+    inputs:
+      azureSubscription: 'my-terraform-pipeline-sp'
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        echo "Running automation.sh with action: backend-${{ parameters.action }}"
+        bash multi-env-vm-creation-updated/scripts/automation.sh dummy backend-${{ parameters.action }}
     env:
-      environment: ${{ parameters.environment }}
-      action: ${{ parameters.action }}
-      params: ${{ parameters.params }}
+      AZURE_DEVOPS_EXT_AZURE_RM_SERVICE_PRINCIPAL_CERTIFICATE_PATH: $(AZURE_DEVOPS_EXT_AZURE_RM_SERVICE_PRINCIPAL_CERTIFICATE_PATH)
+
+parameters:
+- name: action
+  type: string
+  default: 'setup'
+  values:
+  - setup
+  - delete
