@@ -1,8 +1,3 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger: none
 
 parameters:
@@ -42,24 +37,24 @@ steps:
 - checkout: self
 
 - script: |
-    # Make sure terraform is installed
+    # Install Terraform if not present
     if ! command -v terraform &> /dev/null
     then
       echo "Terraform not found, installing..."
       wget https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip
-      unzip terraform_1.5.7_*.zip
+      unzip terraform_1.5.7_linux_amd64.zip
       sudo mv terraform /usr/local/bin/
     fi
     terraform -version
 
-    # Export pipeline secrets for use by automation.sh
+    # Export Azure credentials and admin_password from pipeline variables
     export ARM_CLIENT_ID=$(servicePrincipalId)
     export ARM_CLIENT_SECRET=$(servicePrincipalKey)
     export ARM_TENANT_ID=$(tenantId)
     export ARM_SUBSCRIPTION_ID=$(subscriptionId)
     export admin_password="$(admin_password)"
 
-    # Call automation.sh with correct arguments
+    # Run automation.sh with correct arguments
     if [[ '${{ parameters.action }}' == 'add' ]]; then
       bash scripts/automation.sh '${{ parameters.environment }}' add '${{ parameters.count }}'
     elif [[ '${{ parameters.action }}' == 'delete' ]]; then
