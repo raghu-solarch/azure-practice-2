@@ -1,29 +1,72 @@
-trigger: none
+trigger:
+- main
 
-jobs:
-- job: BackendSetupDelete
-  pool:
-    vmImage: 'ubuntu-latest'
+stages:
+- stage: BackendSetup
+  displayName: Backend Setup Stage
+  jobs:
+  - job: BackendSetupJob
+    displayName: Setup Backend Storage
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - checkout: self
 
-  steps:
-  - checkout: self
+    - task: AzureCLI@2
+      name: AzureLogin
+      inputs:
+        azureSubscription: 'Your-Service-Connection-Name'   # Set your Azure service connection here
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "Running backend setup script..."
+          bash multi-env-vm-creation-updated/scripts/backend.sh
 
-  - task: AzureCLI@2
-    displayName: 'Run Backend Setup/Delete Script'
-    inputs:
-      azureSubscription: 'my-terraform-pipeline-sp'
-      scriptType: bash
-      scriptLocation: inlineScript
-      inlineScript: |
-        echo "Running automation.sh with action: backend-${{ parameters.action }}"
-        bash multi-env-vm-creation-updated/scripts/automation.sh dummy backend-${{ parameters.action }}
+    - publish: multi-env-vm-creation-updated/.backend-env
+      artifact: backend-env
+
+    - publish: multi-env-vm-creation-updated/.backend-config
+      artifact: backend-config
+
+- stage: Automation
+  displayName: VM Automation Stage
+  dependsOn: BackendSetup
+  jobs:
+  - job: RunAutomation
+    displayName: Run Automation Script
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - checkout: self
+
+    - download: current
+      artifact: backend-env
+      patterns: '**/.backend-env'
+
+    - download: current
+      artifact: backend-config
+      patterns: '**/.backend-config'
+
+    - script: |
+        echo "Copying backend files to project root..."
+        cp $(Pipeline.Workspace)/backend-env/.backend-env multi-env-vm-creation-updated/.backend-env
+        cp $(Pipeline.Workspace)/backend-config/.backend-config multi-env-vm-creation-updated/.backend-config
+
+        echo "Running automation.sh with:"
+        echo "  Environment: $(environment)"
+        echo "  Action: $(action)"
+        echo "  Params: $(params)"
+
+        PARAMS_ARRAY=()
+        if [ -n "$(params)" ]; then
+          read -r -a PARAMS_ARRAY <<< "$(params)"
+        fi
+
+        CMD="bash multi-env-vm-creation-updated/scripts/automation.sh $(environment) $(action) ${PARAMS_ARRAY[@]}"
+        echo "Executing: $CMD"
+        eval $CMD
+      displayName: Run Automation Script
     env:
-      AZURE_DEVOPS_EXT_AZURE_RM_SERVICE_PRINCIPAL_CERTIFICATE_PATH: $(AZURE_DEVOPS_EXT_AZURE_RM_SERVICE_PRINCIPAL_CERTIFICATE_PATH)
-
-parameters:
-- name: action
-  type: string
-  default: 'setup'
-  values:
-  - setup
-  - delete
+      environment: 'dev'       # Default, can be overridden by pipeline parameters
+      action: 'show-vms'       # Default action
+      params: ''               # Default params
