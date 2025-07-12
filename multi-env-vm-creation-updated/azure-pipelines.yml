@@ -1,29 +1,56 @@
 trigger:
-- master
+- main
 
 parameters:
   - name: environment
     type: string
     default: 'dev'
+    values:
+      - dev
+      - sit
+      - uat
+      - staging
+      - prod
+
   - name: action
     type: string
-    default: 'create'
-  - name: count
+    default: ''
+    values:
+      - add
+      - delete
+      - destroy-infra
+      - show-vms
+      - cost
+      - backend-setup
+      - backend-delete
+
+  - name: params
     type: string
-    default: '1'
+    default: ''
 
-pool:
-  vmImage: 'ubuntu-latest'
+jobs:
+- job: RunAutomation
+  pool:
+    vmImage: 'ubuntu-latest'
 
-steps:
-- checkout: self
+  steps:
+  - checkout: self
 
-- script: |
-    echo "Current directory: $(pwd)"
-    echo "Listing files in root:"
-    ls -la
-    echo "Listing multi-env-vm-creation-updated/scripts directory:"
-    ls -la multi-env-vm-creation-updated/scripts
+  - script: |
+      echo "Running automation.sh with:"
+      echo "  Environment: ${{ parameters.environment }}"
+      echo "  Action: ${{ parameters.action }}"
+      echo "  Params: ${{ parameters.params }}"
+      
+      # Split params into array if needed
+      PARAM_ARRAY=()
+      if [ -n "${{ parameters.params }}" ]; then
+        # Convert space separated params string into array
+        read -r -a PARAM_ARRAY <<< "${{ parameters.params }}"
+      fi
 
-    bash multi-env-vm-creation-updated/scripts/automation.sh '${{ parameters.environment }}' '${{ parameters.action }}' '${{ parameters.count }}'
-  displayName: 'Run Automation Script'
+      # Build command with params
+      CMD="bash multi-env-vm-creation-updated/scripts/automation.sh ${{ parameters.environment }} ${{ parameters.action }} ${PARAM_ARRAY[@]}"
+      echo "Executing: $CMD"
+      eval $CMD
+    displayName: Run Automation Script
