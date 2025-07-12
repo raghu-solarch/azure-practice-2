@@ -1,18 +1,14 @@
 #!/bin/bash
 set -e
 
-# Usage:
-# bash automation.sh <environment> <action> [parameters]
-#   <environment>: dev | sit | uat | staging | prod
-#   <action>: add | delete | destroy-infra | show-vms | cost | backend-setup | backend-delete
-#   [parameters]: for 'add' action, VM count; for 'delete', VM numbers (space separated)
-
 ENV="$1"
 ACTION="$2"
 shift 2
 PARAMS=("$@")
 
-PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$SCRIPT_DIR/.."
+
 TFVARS_FILE="$PROJECT_ROOT/environments/$ENV.tfvars"
 BACKEND_ENV="$PROJECT_ROOT/.backend-env"
 BACKEND_CONFIG="$PROJECT_ROOT/.backend-config"
@@ -114,7 +110,6 @@ function show_cost() {
     local IP_PRICE=3.65
     local STORAGE_PRICE=2.4
     local VM_COUNT=$(get_vm_numbers | wc -w)
-    local ENV_STORAGE=1
     local VM_COST=$(awk "BEGIN {printf \"%.2f\", $VM_COUNT * $VM_PRICE}")
     local IP_COST=$(awk "BEGIN {printf \"%.2f\", $VM_COUNT * $IP_PRICE}")
     local TOTAL=$(awk "BEGIN {printf \"%.2f\", $VM_COST + $IP_COST + $STORAGE_PRICE}")
