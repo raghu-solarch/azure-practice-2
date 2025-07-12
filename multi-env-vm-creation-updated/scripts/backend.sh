@@ -3,11 +3,27 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$SCRIPT_DIR/.."
 
-# ==== Set your backend resource names here ====
 RESOURCE_GROUP="cbcmultienvvmrg1"
 LOCATION="eastus"
 STORAGE_ACCOUNT="cbcmultienvdisk1"
 CONTAINER="cbctfstatecontainer1"
+
+if [[ "$1" == "delete" ]]; then
+    echo "Deleting storage container..."
+    az storage container delete --account-name "$STORAGE_ACCOUNT" --name "$CONTAINER" --auth-mode login || echo "Container may not exist"
+
+    echo "Deleting storage account..."
+    az storage account delete --name "$STORAGE_ACCOUNT" --resource-group "$RESOURCE_GROUP" --yes || echo "Storage account may not exist"
+
+    echo "Deleting resource group..."
+    az group delete --name "$RESOURCE_GROUP" --yes --no-wait || echo "Resource group may not exist or already deleting"
+
+    # Optionally remove backend config files
+    rm -f "$PROJECT_ROOT/.backend-env" "$PROJECT_ROOT/.backend-config"
+
+    echo "Backend resources deleted."
+    exit 0
+fi
 
 # ==== Create resources ====
 echo "Creating resource group..."
@@ -43,8 +59,6 @@ echo "Storage Account:     $STORAGE_ACCOUNT"
 echo "Storage Container:   $CONTAINER"
 echo "Location:            $LOCATION"
 echo "=========================="
-echo ""
-#echo "Wrote $PROJECT_ROOT/.backend-env and $PROJECT_ROOT/.backend-config with backend resource details."
 echo ""
 echo "DEBUG: .backend-env content:"
 cat "$PROJECT_ROOT/.backend-env"
