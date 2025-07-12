@@ -1,0 +1,70 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger: none
+
+parameters:
+  - name: environment
+    displayName: 'Target Environment'
+    type: string
+    default: 'dev'
+    values:
+      - dev
+      - sit
+      - uat
+      - staging
+      - prod
+
+  - name: action
+    displayName: 'Action'
+    type: string
+    default: 'add'
+    values:
+      - add
+      - delete
+      - show-vms
+      - destroy-infra
+      - cost
+      - backend-setup
+      - backend-delete
+
+  - name: count
+    displayName: 'VM Count (for add) or VM numbers (for delete, space-separated)'
+    type: string
+    default: '1'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- checkout: self
+
+- script: |
+    # Make sure terraform is installed
+    if ! command -v terraform &> /dev/null
+    then
+      echo "Terraform not found, installing..."
+      wget https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip
+      unzip terraform_1.5.7_*.zip
+      sudo mv terraform /usr/local/bin/
+    fi
+    terraform -version
+
+    # Export pipeline secrets for use by automation.sh
+    export ARM_CLIENT_ID=$(servicePrincipalId)
+    export ARM_CLIENT_SECRET=$(servicePrincipalKey)
+    export ARM_TENANT_ID=$(tenantId)
+    export ARM_SUBSCRIPTION_ID=$(subscriptionId)
+    export admin_password="$(admin_password)"
+
+    # Call automation.sh with correct arguments
+    if [[ '${{ parameters.action }}' == 'add' ]]; then
+      bash scripts/automation.sh '${{ parameters.environment }}' add '${{ parameters.count }}'
+    elif [[ '${{ parameters.action }}' == 'delete' ]]; then
+      bash scripts/automation.sh '${{ parameters.environment }}' delete ${{ parameters.count }}
+    else
+      bash scripts/automation.sh '${{ parameters.environment }}' '${{ parameters.action }}'
+    fi
+  displayName: 'Run Automation Script'
