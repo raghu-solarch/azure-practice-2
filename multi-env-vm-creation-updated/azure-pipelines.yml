@@ -38,14 +38,18 @@ jobs:
   - checkout: self
 
   - script: |
+      if [[ "${{ parameters.action }}" == "backend-setup" || "${{ parameters.action }}" == "backend-delete" ]]; then
+        echo "Running backend action: ${{ parameters.action }}"
+        bash multi-env-vm-creation-updated/scripts/automation.sh ${{ parameters.action }}
+        exit 0
+      fi
+
       echo "Checking backend config presence..."
-      if [[ ! -f ".backend-env" && "${{ parameters.action }}" != "backend-setup" ]]; then
-        echo "Backend config not found. Please run with action=backend-setup first."
+      if [[ ! -f ".backend-env" ]]; then
+        echo "Backend config not found. Please run backend-setup first."
         exit 1
       fi
-    displayName: Check Backend Config
 
-  - script: |
       echo "Running automation.sh with:"
       echo "  Environment: ${{ parameters.environment }}"
       echo "  Action: ${{ parameters.action }}"
