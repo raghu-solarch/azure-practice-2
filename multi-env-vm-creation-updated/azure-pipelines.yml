@@ -1,5 +1,9 @@
 trigger:
 - main
+<<<<<<< HEAD
+=======
+- master
+>>>>>>> a20c28ea63dc2b1d5a910c34e106143e0f264534
 
 parameters:
   - name: environment
