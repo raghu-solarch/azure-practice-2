@@ -1,0 +1,1 @@
+to run terraform destroy, use this command: terraform destroy -auto-approve -var="public_ssh_key=$(cat my-ssh-key.pub)"
