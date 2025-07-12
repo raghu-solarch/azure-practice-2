@@ -15,7 +15,7 @@ parameters:
 
   - name: action
     type: string
-    default: ''
+    default: 'add'
     values:
       - add
       - delete
@@ -43,11 +43,13 @@ jobs:
       echo "  Action: ${{ parameters.action }}"
       echo "  Params: ${{ parameters.params }}"
 
+      # Split params into array if needed
       PARAM_ARRAY=()
       if [ -n "${{ parameters.params }}" ]; then
         read -r -a PARAM_ARRAY <<< "${{ parameters.params }}"
       fi
 
+      # Build command with params
       CMD="bash multi-env-vm-creation-updated/scripts/automation.sh ${{ parameters.environment }} ${{ parameters.action }} ${PARAM_ARRAY[@]}"
       echo "Executing: $CMD"
       eval $CMD
