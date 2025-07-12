@@ -1,30 +1,29 @@
 trigger: none
 
-parameters:
-  - name: action
-    type: string
-    default: 'backend-setup'
-    values:
-      - backend-setup
-      - backend-delete
-
 jobs:
-- job: BackendJob
-  displayName: Backend Setup/Delete
+- job: BackendSetupDelete
   pool:
     vmImage: 'ubuntu-latest'
 
   steps:
-  - checkout: none
+  - checkout: self
 
   - task: AzureCLI@2
-    name: RunBackendScript
+    displayName: 'Run Backend Setup/Delete Script'
     inputs:
-      azureSubscription: 'my-terraform-pipeline-sp'  # Replace with your Azure service connection
+      azureSubscription: 'my-terraform-pipeline-sp'
       scriptType: bash
       scriptLocation: inlineScript
       inlineScript: |
-        echo "Running automation.sh with action: ${{ parameters.action }}"
-        # Use a dummy env because backend setup/delete don't require an environment param
-        bash multi-env-vm-creation-updated/scripts/automation.sh dummy ${{ parameters.action }}
-    displayName: Run Backend Setup/Delete Script
+        echo "Running automation.sh with action: backend-${{ parameters.action }}"
+        bash multi-env-vm-creation-updated/scripts/automation.sh dummy backend-${{ parameters.action }}
+    env:
+      AZURE_DEVOPS_EXT_AZURE_RM_SERVICE_PRINCIPAL_CERTIFICATE_PATH: $(AZURE_DEVOPS_EXT_AZURE_RM_SERVICE_PRINCIPAL_CERTIFICATE_PATH)
+
+parameters:
+- name: action
+  type: string
+  default: 'setup'
+  values:
+  - setup
+  - delete
