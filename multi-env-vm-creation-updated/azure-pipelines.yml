@@ -5,7 +5,7 @@ trigger:
 parameters:
   - name: environment
     type: string
-    default: 'dev'
+    default: dev
     values:
       - dev
       - sit
@@ -15,7 +15,7 @@ parameters:
 
   - name: action
     type: string
-    default: 'add'
+    default: show-vms
     values:
       - add
       - delete
@@ -32,25 +32,36 @@ parameters:
 jobs:
 - job: RunAutomation
   pool:
-    vmImage: 'ubuntu-latest'
+    vmImage: ubuntu-latest
 
   steps:
   - checkout: self
 
+  # Copy backend env and config files from workspace (if your pipeline produces these artifacts)
+  - script: |
+      echo "Copying backend files to project root..."
+      cp $(Pipeline.Workspace)/backend-env/.backend-env multi-env-vm-creation-updated/.backend-env
+      cp $(Pipeline.Workspace)/backend-config/.backend-config multi-env-vm-creation-updated/.backend-config
+    displayName: Copy Backend Config Files
+
+  # Run the automation.sh script with parameters passed from pipeline variables
   - script: |
       echo "Running automation.sh with:"
-      echo "  Environment: ${{ parameters.environment }}"
-      echo "  Action: ${{ parameters.action }}"
-      echo "  Params: ${{ parameters.params }}"
+      echo "  Environment: $(environment)"
+      echo "  Action: $(action)"
+      echo "  Params: $(params)"
 
-      # Split params into array if needed
-      PARAM_ARRAY=()
-      if [ -n "${{ parameters.params }}" ]; then
-        read -r -a PARAM_ARRAY <<< "${{ parameters.params }}"
+      # Convert params string to array if not empty
+      PARAMS_ARRAY=()
+      if [ -n "$(params)" ]; then
+        read -r -a PARAMS_ARRAY <<< "$(params)"
       fi
 
-      # Build command with params
-      CMD="bash multi-env-vm-creation-updated/scripts/automation.sh ${{ parameters.environment }} ${{ parameters.action }} ${PARAM_ARRAY[@]}"
+      CMD="bash multi-env-vm-creation-updated/scripts/automation.sh $(environment) $(action) ${PARAMS_ARRAY[@]}"
       echo "Executing: $CMD"
       eval $CMD
     displayName: Run Automation Script
+    env:
+      environment: ${{ parameters.environment }}
+      action: ${{ parameters.action }}
+      params: ${{ parameters.params }}
