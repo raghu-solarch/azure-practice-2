@@ -37,7 +37,14 @@ steps:
 - checkout: self
 
 - script: |
-    # Install Terraform if not present
+    echo "Working directory:"
+    pwd
+    echo "Listing root contents:"
+    ls -al
+    echo "Listing scripts folder contents:"
+    ls -al scripts
+
+    # Make sure terraform is installed
     if ! command -v terraform &> /dev/null
     then
       echo "Terraform not found, installing..."
@@ -47,14 +54,14 @@ steps:
     fi
     terraform -version
 
-    # Export Azure credentials and admin_password from pipeline variables
+    # Export pipeline secrets for use by automation.sh
     export ARM_CLIENT_ID=$(servicePrincipalId)
     export ARM_CLIENT_SECRET=$(servicePrincipalKey)
     export ARM_TENANT_ID=$(tenantId)
     export ARM_SUBSCRIPTION_ID=$(subscriptionId)
     export admin_password="$(admin_password)"
 
-    # Run automation.sh with correct arguments
+    # Call automation.sh with correct arguments
     if [[ '${{ parameters.action }}' == 'add' ]]; then
       bash scripts/automation.sh '${{ parameters.environment }}' add '${{ parameters.count }}'
     elif [[ '${{ parameters.action }}' == 'delete' ]]; then
@@ -62,4 +69,4 @@ steps:
     else
       bash scripts/automation.sh '${{ parameters.environment }}' '${{ parameters.action }}'
     fi
-  displayName: 'Run Automation Script'
+  displayName: 'Debug and Run Automation Script'
