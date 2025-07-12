@@ -18,7 +18,7 @@ parameters:
 
   - name: action
     type: string
-    default: ''
+    default: 'show-vms'
     values:
       - add
       - delete
