@@ -1,3 +1,7 @@
+trigger:
+- main
+- master
+
 parameters:
   - name: environment
     type: string
@@ -11,16 +15,40 @@ parameters:
 
   - name: action
     type: string
-    default: 'backend-setup'
+    default: ''
     values:
-      - backend-setup
-      - backend-delete
       - add
       - delete
       - destroy-infra
       - show-vms
       - cost
+      - backend-setup
+      - backend-delete
 
   - name: params
     type: string
     default: ''
+
+jobs:
+- job: RunAutomation
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  - checkout: self
+
+  - script: |
+      echo "Running automation.sh with:"
+      echo "  Environment: ${{ parameters.environment }}"
+      echo "  Action: ${{ parameters.action }}"
+      echo "  Params: ${{ parameters.params }}"
+
+      PARAM_ARRAY=()
+      if [ -n "${{ parameters.params }}" ]; then
+        read -r -a PARAM_ARRAY <<< "${{ parameters.params }}"
+      fi
+
+      CMD="bash multi-env-vm-creation-updated/scripts/automation.sh ${{ parameters.environment }} ${{ parameters.action }} ${PARAM_ARRAY[@]}"
+      echo "Executing: $CMD"
+      eval $CMD
+    displayName: Run Automation Script
