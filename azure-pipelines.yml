@@ -15,15 +15,15 @@ parameters:
 
   - name: action
     type: string
-    default: 'backend-setup'
+    default: 'add'
     values:
-      - backend-setup
-      - backend-delete
       - add
       - delete
       - destroy-infra
       - show-vms
       - cost
+      - backend-setup
+      - backend-delete
 
   - name: params
     type: string
@@ -38,28 +38,18 @@ jobs:
   - checkout: self
 
   - script: |
-      if [[ "${{ parameters.action }}" == "backend-setup" || "${{ parameters.action }}" == "backend-delete" ]]; then
-        echo "Running backend action: ${{ parameters.action }}"
-        bash multi-env-vm-creation-updated/scripts/automation.sh ${{ parameters.action }}
-        exit 0
-      fi
-
-      echo "Checking backend config presence..."
-      if [[ ! -f ".backend-env" ]]; then
-        echo "Backend config not found. Please run backend-setup first."
-        exit 1
-      fi
-
       echo "Running automation.sh with:"
       echo "  Environment: ${{ parameters.environment }}"
       echo "  Action: ${{ parameters.action }}"
       echo "  Params: ${{ parameters.params }}"
 
+      # Split params into array if needed
       PARAM_ARRAY=()
       if [ -n "${{ parameters.params }}" ]; then
         read -r -a PARAM_ARRAY <<< "${{ parameters.params }}"
       fi
 
+      # Build command with params
       CMD="bash multi-env-vm-creation-updated/scripts/automation.sh ${{ parameters.environment }} ${{ parameters.action }} ${PARAM_ARRAY[@]}"
       echo "Executing: $CMD"
       eval $CMD
