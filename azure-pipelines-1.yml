@@ -1,29 +1,24 @@
 trigger:
-- main
-- master
+- none
 
 parameters:
   - name: action
     type: string
-    default: 'backend-setup'
+    default: backend-setup
     values:
       - backend-setup
       - backend-delete
 
 jobs:
-- job: BackendSetupDelete
+- job: BackendJob
+  displayName: Backend Setup/Delete Job
   pool:
-    vmImage: 'ubuntu-latest'
+    vmImage: ubuntu-latest
 
   steps:
   - checkout: self
 
-  - task: AzureCLI@2
+  - script: |
+      echo "Running automation.sh with action: ${{ parameters.action }}"
+      bash multi-env-vm-creation-updated/scripts/automation.sh dummy ${{ parameters.action }}
     displayName: Run Backend Setup/Delete Script
-    inputs:
-      azureSubscription: 'my-terraform-pipeline-sp'   # Replace with your Azure service connection name
-      scriptType: bash
-      scriptLocation: inlineScript
-      inlineScript: |
-        echo "Running automation.sh with action: ${{ parameters.action }}"
-        bash multi-env-vm-creation-updated/scripts/automation.sh dummy ${{ parameters.action }}
