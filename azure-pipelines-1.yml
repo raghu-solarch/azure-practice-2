@@ -1,5 +1,6 @@
 trigger:
-- none  # No automatic trigger; run manually
+- main
+- master
 
 parameters:
   - name: action
@@ -10,7 +11,7 @@ parameters:
       - backend-delete
 
 jobs:
-- job: BackendSetupOrDelete
+- job: BackendSetupDelete
   pool:
     vmImage: 'ubuntu-latest'
 
@@ -20,8 +21,7 @@ jobs:
   - script: |
       echo "Running automation.sh with action: ${{ parameters.action }}"
 
-      # Backend commands don’t need environment or params
-      CMD="bash multi-env-vm-creation-updated/scripts/automation.sh dummy ${parameters.action}"
+      CMD="bash multi-env-vm-creation-updated/scripts/automation.sh dummy ${{ parameters.action }}"
       echo "Executing: $CMD"
       eval $CMD
     displayName: Run Backend Setup/Delete Script
