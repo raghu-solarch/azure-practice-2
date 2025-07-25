@@ -1,0 +1,4 @@
+resource_group_name  = "cbcmultienvvmrg1"
+storage_account_name = "cbcmultienvdisk1"
+container_name       = "cbctfstatecontainer1"
+key                  = "terraform.tfstate"

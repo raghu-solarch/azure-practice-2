@@ -2,7 +2,7 @@ resource "azurerm_linux_virtual_machine" "docker" {
   name                  = "docker"
   resource_group_name   = azurerm_resource_group.docker-rg.name
   location              = azurerm_resource_group.docker-rg.location
-  size                  = "Standard_B1s"
+  size                  = "Standard_B2s"
   admin_username        = "learning"
   network_interface_ids = [azurerm_network_interface.docker-nic.id]
 
